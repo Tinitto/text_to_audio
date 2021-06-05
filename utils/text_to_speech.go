@@ -26,10 +26,12 @@ func ConvertTextToAudio(ctx context.Context, text string, languageCode string) (
 		},
 		Voice: &texttospeechpb.VoiceSelectionParams{
 			LanguageCode: languageCode,
-			SsmlGender: texttospeechpb.SsmlVoiceGender_FEMALE,
+			SsmlGender: texttospeechpb.SsmlVoiceGender_MALE,
+			
 		},
 		AudioConfig: &texttospeechpb.AudioConfig{
 			AudioEncoding: texttospeechpb.AudioEncoding_MP3,
+			SpeakingRate: 0.6,
 		},
 	}
 
