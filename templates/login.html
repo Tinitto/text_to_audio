@@ -1,0 +1,43 @@
+{{template "base" .}} {{ define "head" }}
+<meta
+  name="google-signin-client_id"
+  content="1087345132165-98a54hboq0k4e657squm1u5d13n2bc7m.apps.googleusercontent.com"
+/>
+<script src="https://apis.google.com/js/platform.js" async defer></script>
+{{ end }} {{ define "main" }}
+<div class="container">
+  <div class="row">
+    <div class="col-12 d-flex justify-content-center align-items-center">
+      <div class="g-signin2" data-onsuccess="onSignIn"></div>
+    </div>
+  </div>
+</div>
+<script>
+  function onSignIn(googleUser) {
+    console.log({ googleUser });
+    const googleToken = JSON.stringify(googleUser);
+
+    fetch({
+      url: "/login",
+      method: "POST",
+      body: googleToken,
+      headers: {
+        "Content-Type": "application/json",
+      },
+    })
+      .then((resp) => {
+        if (!resp.ok) {
+          throw new Error("You are not permitted here.");
+        }
+        return resp.json();
+      })
+      .then((data) => {
+        window.localStorage.setItem("token", data.token);
+        window.location.assign("/");
+      })
+      .catch((err) => {
+        window.location.assign(`/error?msg=${encodeURIComponent(err)}`);
+      });
+  }
+</script>
+{{ end }}

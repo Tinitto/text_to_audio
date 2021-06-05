@@ -23,3 +23,13 @@ app built in vuejs or quasar to be enable users receive their audios on their ph
 
 - The back end is a simple golang app with a web server
 - The front end is a simple html file with a PWA enabled. I will need to use go templates.
+
+## Notes
+
+- No need for gofiber. I just need three templates.
+
+  - One displays the textarea where text is to be put
+  - The other displays a login with google button if user is not logged in
+  - The other displays that sorry, you are not allowed here, if they are not in the list of email addresses allowed.
+
+- For session, I can use google session to track the email of the signed in user.
