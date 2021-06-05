@@ -26,7 +26,7 @@ type App struct {
 // return to client a JWT token if google token is valid
 func (app *App) LoginPage(w http.ResponseWriter, r *http.Request)  {
 	if r.Method == "GET" {
-		app.respondWithTemplate(w, "login.html", "")
+		app.respondWithTemplate(w, "login.html", app.GoogleClientId)
 		return
 	}
 	defer r.Body.Close()

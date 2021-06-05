@@ -1,11 +1,8 @@
 <!DOCTYPE html>
 <html lang="en">
   <head>
-    {{ template "head" .}}
-    <meta
-      name="google-signin-client_id"
-      content="1087345132165-98a54hboq0k4e657squm1u5d13n2bc7m.apps.googleusercontent.com"
-    />
+    {{ template "head" .}} <meta name="google-signin-client_id" content="{{
+    printf "%s" .Body }}" />
     <script src="https://apis.google.com/js/platform.js" async defer></script>
   </head>
   <body>
@@ -31,7 +28,6 @@
           },
         })
           .then((resp) => {
-            console.log("🚀 ~ file: login.html ~ line 35 ~ .then ~ resp", resp);
             if (!resp.ok) {
               throw new Error("You are not permitted here.");
             }
