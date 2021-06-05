@@ -1,57 +1,17 @@
 package utils
 
 import (
-	"encoding/json"
+	"context"
 	"errors"
 	"fmt"
-	"io/ioutil"
 	"net/http"
 	"strings"
 	"time"
 
 	"github.com/dgrijalva/jwt-go"
+	"google.golang.org/api/oauth2/v1"
+	"google.golang.org/api/option"
 )
-
-// Example handler for logging in if one was to then generate their own token
-//  func (cfg config) loginHandler(w http.ResponseWriter, r *http.Request) {
-// 	defer r.Body.Close()
-
-// 	// parse the GoogleJWT that was POSTed from the front-end
-// 	type parameters struct {
-// 		GoogleJWT *string
-// 	}
-// 	decoder := json.NewDecoder(r.Body)
-// 	params := parameters{}
-// 	err := decoder.Decode(&params)
-// 	if err != nil {
-// 		respondWithError(w, 500, "Couldn't decode parameters")
-// 		return
-// 	}
-
-// 	// Validate the JWT is valid
-// 	claims, err := auth.ValidateGoogleJWT(*params.GoogleJWT)
-// 	if err != nil {
-// 		respondWithError(w, 403, "Invalid google auth")
-// 		return
-// 	}
-// 	if claims.Email != user.Email {
-// 		respondWithError(w, 403, "Emails don't match")
-// 		return
-// 	}
-
-// 	// create a JWT for OUR app and give it back to the client for future requests
-// 	tokenString, err := auth.MakeJWT(claims.Email, cfg.JWTSecret)
-// 	if err != nil {
-// 		respondWithError(w, 500, "Couldn't make authentication token")
-// 		return
-// 	}
-
-// 	respondWithJSON(w, 200, struct {
-// 		Token string `json:"token"`
-// 	}{
-// 		Token: tokenString,
-// 	})
-// }
 
 // Verifies that the JWT token is valid
 func VerifyJWTToken(r *http.Request, jwtSecret string, allowedEmails map[string]struct{}) (bool, error) {
@@ -115,77 +75,30 @@ func MakeJWT(email string, secret string, allowedEmails map[string]struct{}) (st
 	return tokenString, nil
 }
 
-// Validates the JWT token passed by the client to ensure it is still valid according to Google
-func ValidateGoogleJWT(tokenString string, clientId string) (GoogleClaims, error) {
-	token, err := jwt.ParseWithClaims(
-		tokenString, 
-		&GoogleClaims{}, 
-		func(t *jwt.Token) (interface{}, error) {
-			pem, err := getGooglePublicKey(t.Header["kid"].(string))
-			if err != nil {
-				return nil, err
-			}
-
-			key, err := jwt.ParseECPrivateKeyFromPEM([]byte(pem))
-			if err != nil {
-				return nil, err 
-			}
-
-			return key, nil
-	})
+// Gets the token info from google
+func ValidateGoogleJWT(ctx context.Context, idToken string, clientId string) (*oauth2.Tokeninfo, error) {
+	httpClient := &http.Client{}
+    oauth2Service, err := oauth2.NewService(ctx, option.WithHTTPClient(httpClient))
 	if err != nil {
-		return GoogleClaims{}, err
+		return nil, err
+	}
+    tokenInfoCall := oauth2Service.Tokeninfo()    
+    tokenInfo, err := tokenInfoCall.IdToken(idToken).Do()
+    if err != nil {
+        return nil, err
+    }
+
+	if tokenInfo.Issuer != "accounts.google.com" && tokenInfo.Issuer != "https://accounts.google.com" {
+		return nil, errors.New("iss is invalid")
 	}
 
-	claims, ok := token.Claims.(*GoogleClaims)
-	if !ok {
-		return GoogleClaims{}, errors.New("invalid Google JWT")
+	if tokenInfo.Audience != clientId {
+		return nil, errors.New("aud is invalid")
 	}
 
-	if claims.Issuer != "accounts.google.com" && claims.Issuer != "https://accounts.google.com" {
-		return GoogleClaims{}, errors.New("iss is invalid")
+	if tokenInfo.ExpiresIn < 2 {
+		return nil, errors.New("JWT is expired")
 	}
 
-	if claims.Audience != clientId {
-		return GoogleClaims{}, errors.New("aud is invalid")
-	}
-
-	if claims.ExpiresAt < time.Now().UTC().Unix() {
-		return GoogleClaims{}, errors.New("JWT is expired")
-	}
-
-	return GoogleClaims{}, nil
-}
-
-// The structure of the claims Google is to add to its JWT
-type GoogleClaims struct {
-	Email         string `json:"email"`
-	EmailVerified bool   `json:"email_verified"`
-	FirstName     string `json:"given_name"`
-	LastName      string `json:"family_name"`
-	jwt.StandardClaims
-}
-
-// Google hosts their public key over HTTPS. 
-// Each time we need to verify a request we can go grab their public key as follows
-func getGooglePublicKey(keyID string) (string, error) {
-	resp, err := http.Get("https://www.googleapis.com/oauth2/v1/certs")
-	if err != nil {
-		return "", err
-	}
-	dat, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		return "", err
-	}
-
-	myResp := map[string]string{}
-	err = json.Unmarshal(dat, &myResp)
-	if err != nil {
-		return "", err
-	}
-	key, ok := myResp[keyID]
-	if !ok {
-		return "", errors.New("key not found")
-	}
-	return key, nil
+    return tokenInfo, nil
 }

@@ -5,6 +5,8 @@
 package main
 
 import (
+	"fmt"
+	"html/template"
 	"log"
 	"net/http"
 	"os"
@@ -15,6 +17,7 @@ import (
 )
 
 func main()  {
+	
 	allowedEmails := strings.Split(os.Getenv("ALLOWED_EMAILS"), ",")
 	allowedEmailsMap := map[string]struct{}{}
 
@@ -25,12 +28,22 @@ func main()  {
 		AllowedEmails: allowedEmailsMap,
 		JWTSecret: os.Getenv("JWT_SECRET"),
 		GoogleClientId: os.Getenv("GOOGLE_CLIENT_ID"),
+		Templates : template.Must(template.ParseFiles(
+			"templates/head.html",
+			"templates/footer.html",
+			"templates/error.html", 
+			"templates/login.html", 
+			"templates/home.html", 
+			)),
 	}
 
-	http.HandleFunc("/", app.HomePage)
-	http.HandleFunc("/login", app.LoginPage)
-	http.HandleFunc("/error", app.ErrorPage)
+	mux := http.NewServeMux()
 
-	log.Fatal(http.ListenAndServe(":8000", nil))
+	mux.HandleFunc("/login", app.LoginPage)
+	mux.HandleFunc("/error", app.ErrorPage)
+	mux.HandleFunc("/", app.HomePage)
+
+	fmt.Println("Starting the serer on 0.0.0.0:8000. Hit Ctrl-C to stop.")
+	log.Fatal(http.ListenAndServe(":8000", mux))
 	
 }

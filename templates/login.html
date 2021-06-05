@@ -1,43 +1,52 @@
-{{template "base" .}} {{ define "head" }}
-<meta
-  name="google-signin-client_id"
-  content="1087345132165-98a54hboq0k4e657squm1u5d13n2bc7m.apps.googleusercontent.com"
-/>
-<script src="https://apis.google.com/js/platform.js" async defer></script>
-{{ end }} {{ define "main" }}
-<div class="container">
-  <div class="row">
-    <div class="col-12 d-flex justify-content-center align-items-center">
-      <div class="g-signin2" data-onsuccess="onSignIn"></div>
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    {{ template "head" .}}
+    <meta
+      name="google-signin-client_id"
+      content="1087345132165-98a54hboq0k4e657squm1u5d13n2bc7m.apps.googleusercontent.com"
+    />
+    <script src="https://apis.google.com/js/platform.js" async defer></script>
+  </head>
+  <body>
+    <div class="container h-100">
+      <div class="row h-100">
+        <div
+          class="col-12 d-flex justify-content-center align-items-center h-100"
+        >
+          <div class="g-signin2" data-onsuccess="onSignIn"></div>
+        </div>
+      </div>
     </div>
-  </div>
-</div>
-<script>
-  function onSignIn(googleUser) {
-    console.log({ googleUser });
-    const googleToken = JSON.stringify(googleUser);
+    <script>
+      function onSignIn(googleUser) {
+        const googleToken = googleUser.getAuthResponse().id_token;
+        const body = JSON.stringify({ GoogleJWT: googleToken });
 
-    fetch({
-      url: "/login",
-      method: "POST",
-      body: googleToken,
-      headers: {
-        "Content-Type": "application/json",
-      },
-    })
-      .then((resp) => {
-        if (!resp.ok) {
-          throw new Error("You are not permitted here.");
-        }
-        return resp.json();
-      })
-      .then((data) => {
-        window.localStorage.setItem("token", data.token);
-        window.location.assign("/");
-      })
-      .catch((err) => {
-        window.location.assign(`/error?msg=${encodeURIComponent(err)}`);
-      });
-  }
-</script>
-{{ end }}
+        fetch("/login", {
+          method: "POST",
+          body,
+          headers: {
+            "Content-Type": "application/json",
+          },
+        })
+          .then((resp) => {
+            console.log("🚀 ~ file: login.html ~ line 35 ~ .then ~ resp", resp);
+            if (!resp.ok) {
+              throw new Error("You are not permitted here.");
+            }
+            return resp.json();
+          })
+          .then((data) => {
+            window.localStorage.setItem("token", data.token);
+            window.location.assign("/");
+          })
+          .catch((err) => {
+            window.location.assign(`/error?msg=${encodeURIComponent(err)}`);
+          });
+      }
+    </script>
+
+    {{ template "footer" .}}
+  </body>
+</html>
