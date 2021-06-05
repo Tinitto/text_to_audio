@@ -18,6 +18,7 @@ type App struct {
 	AllowedEmails map[string]struct{}
 	JWTSecret string
 	GoogleClientId string
+	Port int64
 	Templates *template.Template
 }
 

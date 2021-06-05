@@ -10,6 +10,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"strconv"
 	"strings"
 
 	_ "github.com/joho/godotenv/autoload"
@@ -24,10 +25,17 @@ func main()  {
 	for _, email := range allowedEmails {
 		allowedEmailsMap[email] = struct{}{}
 	}
+	portString := os.Getenv("PORT")
+	port, err := strconv.ParseInt(portString, 10, 64)
+	if err != nil {
+		log.Fatal("The PORT has not been set in your environment")
+	}
+
 	app := utils.App{
 		AllowedEmails: allowedEmailsMap,
 		JWTSecret: os.Getenv("JWT_SECRET"),
 		GoogleClientId: os.Getenv("GOOGLE_CLIENT_ID"),
+		Port: port,
 		Templates : template.Must(template.ParseFiles(
 			"templates/head.html",
 			"templates/footer.html",
@@ -43,7 +51,7 @@ func main()  {
 	mux.HandleFunc("/error", app.ErrorPage)
 	mux.HandleFunc("/", app.HomePage)
 
-	fmt.Println("Starting the server on 0.0.0.0:8000. Hit Ctrl-C to stop.")
-	log.Fatal(http.ListenAndServe(":8000", mux))
+	fmt.Printf("Starting the server on 0.0.0.0:%d. Hit Ctrl-C to stop.\n", app.Port)
+	log.Fatal(http.ListenAndServe(fmt.Sprintf(":%d", app.Port), mux))
 	
 }
