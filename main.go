@@ -43,7 +43,7 @@ func main()  {
 	mux.HandleFunc("/error", app.ErrorPage)
 	mux.HandleFunc("/", app.HomePage)
 
-	fmt.Println("Starting the serer on 0.0.0.0:8000. Hit Ctrl-C to stop.")
+	fmt.Println("Starting the server on 0.0.0.0:8000. Hit Ctrl-C to stop.")
 	log.Fatal(http.ListenAndServe(":8000", mux))
 	
 }

@@ -22,7 +22,7 @@ func ConvertTextToAudio(ctx context.Context, text string, languageCode string) (
 
 	req := texttospeechpb.SynthesizeSpeechRequest{
 		Input: &texttospeechpb.SynthesisInput{
-			InputSource: &texttospeechpb.SynthesisInput_Text{Text: "Hello, World"},
+			InputSource: &texttospeechpb.SynthesisInput_Text{Text: text},
 		},
 		Voice: &texttospeechpb.VoiceSelectionParams{
 			LanguageCode: languageCode,

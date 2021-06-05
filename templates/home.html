@@ -24,6 +24,11 @@
         </div>
       </div>
       <div class="row">
+        <div class="col-12">
+          <audio id="player">
+            <source src="" type="audio/mpeg">
+          </audio>
+        </div>
         <div class="col-12 justify-content-center">
           <div id="editor">
             <p>Paste your text here and click Convert!</p>
@@ -55,6 +60,16 @@
       }
 
       /**
+       * Plays the audio that has been passed to it 
+       * */
+      function playAudio(audioBlob) {
+        const audioFileUrl = window.URL.createObjectURL(audioBlob);
+        const playerElement = document.getElementById("player");
+        playerElement.src = audioFileUrl;
+        playerElement.play();
+      }
+
+      /**
        * Sends the text to the remote server and download the file
        * */
       function sendText() {
@@ -75,10 +90,9 @@
             Authorization: `Bearer ${tokenString}`,
           },
         })
-          .then((resp) => resp.blob)
+          .then((resp) => resp.blob())
           .then((blob) => {
-            const fileUrl = window.URL.createObjectURL(blob);
-            window.location.assign(fileUrl);
+            playAudio(blob);
           })
           .catch((err) => {
             alert(err);
