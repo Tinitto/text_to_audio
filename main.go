@@ -10,6 +10,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"path/filepath"
 	"strconv"
 	"strings"
 
@@ -18,7 +19,7 @@ import (
 )
 
 func main()  {
-	
+	dir := os.Getenv("WORKING_DIRECTORY")
 	allowedEmails := strings.Split(os.Getenv("ALLOWED_EMAILS"), ",")
 	allowedEmailsMap := map[string]struct{}{}
 
@@ -36,13 +37,7 @@ func main()  {
 		JWTSecret: os.Getenv("JWT_SECRET"),
 		GoogleClientId: os.Getenv("GOOGLE_CLIENT_ID"),
 		Port: port,
-		Templates : template.Must(template.ParseFiles(
-			"templates/head.html",
-			"templates/footer.html",
-			"templates/error.html", 
-			"templates/login.html", 
-			"templates/home.html", 
-			)),
+		Templates : template.Must(template.ParseGlob(filepath.Join(dir, "templates", "*"))),
 	}
 
 	mux := http.NewServeMux()
